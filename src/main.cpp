@@ -5,14 +5,22 @@
 
 char channel = 0;  
 
-void select_channel(char channel) {
+void select_channel(char channel) { //configuracion del adc
     if (channel <= 15) {  
         ADMUX &= 0xF0;       
         ADMUX |= channel;         
     }
     }
 
-ISR(INT0_vect) {
+void config_INT0() { //configruar interrupcion
+        EIMSK |= (1 << INT0);    //configurar inetrrupcion
+        EICRA |= (1 << ISC01);    // configurar interrupcion en puerto d
+    
+        DDRD &= ~0x04;      //pin d2 a utilizar
+        PORTD |=0x04;
+}  
+    
+ISR(INT0_vect) { //q haremos  con la interrupcion
     _delay_ms(50);  
         channel++;
         if (channel > 2){
@@ -23,18 +31,20 @@ ISR(INT0_vect) {
 
 
 int main(void) {
+
     ADMUX |= (1 << REFS0); 
     ADCSRA |= (1 << ADEN) | (1 << ADPS2); 
     select_channel(0);
+    config_INT0(); //agregar config para que lea las interrupciones
     sei();  
 
-    DDRD |= 0xF8;   
+    DDRD |= 0xF8;    //los leds
     DDRB |= 0x1F;   
 
-    char alow = 0;
+    char alow = 0; //variable
     char ahigh = 0;
 
-    while (1) {
+    while (1) { //el while permanece con lso desplazamientos
 
         ADCSRA |= (1 << ADSC);             
         while (!(ADCSRA & (1 << ADIF)));   
